@@ -9,7 +9,6 @@ import java.util.regex.Pattern;
 public class Matrix {
     private double[][] array;
     private double[][] firstArray;
-    private double[] sums;
     private double[] rootsGauss;
     private double[] rootsItr;
     private int rowNumber;
@@ -44,23 +43,21 @@ public class Matrix {
         columnNumber = Integer.parseInt(sn[1]) + 1;
         epsilon = Math.pow(10, -Double.parseDouble(sn[2]) - 1);
         create(rowNumber, columnNumber);
-        int variant = Integer.parseInt(sn[3]);
-        if (variant == 1) {
+//        int variant = Integer.parseInt(sn[3]); // заполнение матрицы на рандом
+//        if (variant == 2) {
+//        Random rand = new Random();
+//            for (int i = 0; i < rowNumber; i++)
+//                for (int j = 0; j < columnNumber; j++)
+//                    firstArray[i][j] = rand.nextInt(20) - 10;
+//        }
+//        else if (variant == 1) {
             for (int i = 0; i < rowNumber; i++) {
                 str = scan.nextLine();
                 sn = pat.split(str);
                 for (int j = 0; j < columnNumber; j++)
                     firstArray[i][j] = Double.parseDouble(sn[j]);
             }
-        }
-        else if (variant == 2) {
-            Random rand = new Random();
-            for (int i = 0; i < rowNumber; i++) {
-                for (int j = 0; j < columnNumber; j++) {
-                    firstArray[i][j] = rand.nextInt(20) - 10;
-                }
-            }
-        }
+//        }
         scan.close();
 
         array = new double[rowNumber][columnNumber];
@@ -72,9 +69,11 @@ public class Matrix {
     //решение системы методом Гаусса
     public void findSolutionGauss() {
         makeTriangle();
+        System.out.println("Матрица в треугольном виде:");
         print();
         if (makeTriangle() == 0) {
             findRootsGauss();
+            System.out.println("Корни системы:");
             for (int i = 0; i < rootsGauss.length; i++) {
                 System.out.printf("x"+ (i + 1) + " = " + "%12.6E\n", rootsGauss[i]);
             }
@@ -92,7 +91,7 @@ public class Matrix {
     //приведение к треугольному виду
     private int makeTriangle() {
         for (int i = 0; i < rowNumber; i++) {
-            if (array[i][i] == 0)
+            if (isZero(array[i][i]))
                 if (firstNotZeroElement(i, i) != -1)
                     swapLines(i, firstNotZeroElement(i, i));
                 else
@@ -119,23 +118,6 @@ public class Matrix {
         }
     }
 
-    //проверка корней
-    //public void checkSolution() {
-//        double[] lastColumn = new double[rowNumber];
-//        System.out.println("Полученный столбец свободных членов:");
-//        for (int i = 0; i < rowNumber; i++) {
-//            for (int j = 0; j < columnNumber - 1; j++) {
-//                lastColumn[i] += rootsGauss[j] * firstArray[i][j];
-//            }
-//            System.out.printf("%15.6E", lastColumn[i]);
-//        }
-//        System.out.println();
-//        System.out.println("Заданный столбец свободных членов:");
-//        for (int i = 0; i < rowNumber; i++) {
-//            System.out.printf("%15.6E", firstArray[i][columnNumber - 1]);
-//        }
-//    }
-
     //поиск первого ненулевого элемента в заданном столбце после индекса
     private int firstNotZeroElement(int column, int index) {
             int answer = -1;
@@ -149,15 +131,15 @@ public class Matrix {
     }
 
     //перестановка строк
-    private void swapLines(int firstRaw, int secondRaw) {
-            double[] temp = array[firstRaw];
-            array[firstRaw] = array[secondRaw];
-            array[secondRaw] = temp;
+    private void swapLines(int firstRow, int secondRow) {
+            double[] temp = array[firstRow];
+            array[firstRow] = array[secondRow];
+            array[secondRow] = temp;
     }
-    private void swapLines(int firstRaw, int secondRaw, double[][] array) {
-        double[] temp = array[firstRaw];
-        array[firstRaw] = array[secondRaw];
-        array[secondRaw] = temp;
+    private void swapLines(int firstRow, int secondRow, double[][] array) {
+        double[] temp = array[firstRow];
+        array[firstRow] = array[secondRow];
+        array[secondRow] = temp;
     }
 
 
@@ -171,8 +153,8 @@ public class Matrix {
     public void findSolutionIterations() {
         for (int i = 0; i < rowNumber; i++)
             array[i] = Arrays.copyOf(firstArray[i], columnNumber);
+        System.out.println("Изначальная матрица:");
         print();
-        fillSums();
         if(isDiagonalZero(array))
             if (!removeZeroes()) {
                 System.out.println("Нельзя решить итерационным методом");
@@ -181,24 +163,33 @@ public class Matrix {
         if (!isCSSTrue())
             swapLinesForCSS();
         if (isCSSTrue()) {
-                changeArray();
-                print();
-                findRootsItr();
+            changeArray();
+            System.out.println("Измененная матрица:");
+            print();
+            findRootsItr();
 
-                for (int i = 0; i < rootsItr.length; i++)
-                    if (Double.isInfinite(rootsItr[i]) || Double.isNaN(rootsItr[i]))
-                        System.out.println("Нельзя решить итерационным методом");
-                    else
-                        System.out.printf("x" + (i + 1) + " = " + "%12.6E\n", rootsItr[i]);
+            for (int i = 0; i < rootsItr.length; i++)
+                if (Double.isInfinite(rootsItr[i]) || Double.isNaN(rootsItr[i])) {
+                    System.out.println("Нельзя решить итерационным методом");
+                    return;
+                }
+                else {
+                    if (i == 0) System.out.println("Корни системы:");
+                    System.out.printf("x" + (i + 1) + " = " + "%12.6E\n", rootsItr[i]);
+                }
             }
         else {
-                changeArray();
+            changeArray();
+            if (findRootsItrCtrl()) {
+                System.out.println("Измененная матрица:");
                 print();
-                if (findRootsItrCtrl())
-                    for (int i = 0; i < rootsItr.length; i++)
-                        System.out.printf("x" + (i + 1) + " = " + "%12.6E\n", rootsItr[i]);
-                else
-                    System.out.println("Нельзя решить итерационным методом, система расходится");
+                System.out.println("Корни системы:");
+                for (int i = 0; i < rootsItr.length; i++) {
+                    System.out.printf("x" + (i + 1) + " = " + "%12.6E\n", rootsItr[i]);
+                }
+            }
+            else
+                System.out.println("Нельзя решить итерационным методом, система расходится");
         }
     }
 
@@ -206,21 +197,24 @@ public class Matrix {
     //выполняется ли ДУС
     private boolean isCSSTrue(){
         boolean res = false;
+        boolean check = false;
         double diff;
+        double[] sums = findSums();
         for (int i = 0; i < rowNumber; i++) {
             diff = sums[i] - 2 * Math.abs(array[i][i]);
-            if (diff < 0) {
-                if (diff <= 0)
-                    res = true;
+            if (diff < 0 || isZero(diff)) {
+                if (!isZero(diff))
+                    check = true;
+                res = true;
             }
-            else return res;
+            else return false;
         }
-        return res;
+        return res && check;
     }
 
     private void swapLinesForCSS(){
         for (int i = 0; i < rowNumber; i++) {
-            if(!isDiagElemMoreSum(i)) {
+            if (isDiagElemMoreSum(i) == -1) {
                 if (findLineWithMax(i) != -1)
                     swapLines(findLineWithMax(i), i);
                 else return;
@@ -258,7 +252,7 @@ public class Matrix {
             x = rootsItr[0];
             for (int i = 0; i < rowNumber; i++) {
                 rootsItr[i] = array[i][columnNumber - 1];
-                for (int j = 0; j < columnNumber - 2; j++) {
+                for (int j = 0; j < columnNumber - 1; j++) {
                     if (i != j)
                         rootsItr[i] -= array[i][j] * rootsItr[j];
                 }
@@ -275,7 +269,7 @@ public class Matrix {
             x = rootsItr[0];
             for (int i = 0; i < rowNumber; i++) {
                 rootsItr[i] = array[i][columnNumber - 1];
-                for (int j = 0; j < columnNumber - 2; j++) {
+                for (int j = 0; j < columnNumber - 1; j++) {
                     if (i != j)
                         rootsItr[i] -= array[i][j] * rootsItr[j];
                 }
@@ -290,10 +284,9 @@ public class Matrix {
     private void changeArray() {
         for (int i = 0; i < rowNumber; i++) {
             double cur = array[i][i];
-            for (int j = 0; j < columnNumber - 1; j++) {
+            for (int j = 0; j < columnNumber ; j++) {
                     array[i][j] /= cur;
             }
-            array[i][columnNumber - 1] /= cur;
         }
     }
 
@@ -341,29 +334,35 @@ public class Matrix {
     }
 
     //поиск сумм строк по модулю
-    private void fillSums(){
-        sums = new double[rowNumber];
+    private double[] findSums(){
+        double[] sums = new double[rowNumber];
         for (int i = 0; i < rowNumber; i++) {
             for (int j = 0; j < columnNumber - 1; j++) {
                 sums[i] += Math.abs(array[i][j]);
             }
         }
+        return sums;
     }
 
-    private boolean isDiagElemMoreSum(int i) {
+    private int isDiagElemMoreSum(int i) {
+        int k = -1;
+        double[] sums = findSums();
         double diff = sums[i] - 2 * Math.abs(array[i][i]);
-        if (diff < 0)
-            return diff <= 0;
-       return false;
+        if (diff < 0 || isZero(diff))
+            if (isZero(diff))
+                k = 1;
+            else
+                k = 0;
+       return k;
     }
 
     private int findLineWithMax(int index){
         double diff;
+        double[] sums = findSums();
         for (int i = 0; i < rowNumber; i++) {
             if(i != index) {
                 diff = sums[i] - 2 * Math.abs(array[i][index]);
-                if (diff < 0)
-                    if (diff <= 0)
+                if (diff <= 0)
                         return i;
             }
         }

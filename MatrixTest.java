@@ -14,6 +14,7 @@ public class MatrixTest {
         {
             System.out.println("FILE NOT FOUND!!!");
         }
+        System.out.println("Изначальная матрица:");
         mat.print();
         mat.findSolutionGauss();
         mat.findSolutionIterations();
