@@ -41,7 +41,7 @@ public class Matrix {
         String[] sn = pat.split(str);
         rowNumber = Integer.parseInt(sn[0]);
         columnNumber = Integer.parseInt(sn[1]) + 1;
-        epsilon = Math.pow(10, -Double.parseDouble(sn[2]) - 1);
+        epsilon = Double.parseDouble(sn[2]);
         create(rowNumber, columnNumber);
 //        int variant = Integer.parseInt(sn[3]); // заполнение матрицы на рандом
 //        if (variant == 2) {
@@ -160,8 +160,9 @@ public class Matrix {
                 System.out.println("Нельзя решить итерационным методом");
                 return;
             }
-        if (!isCSSTrue())
+        if (!isCSSTrue()) {
             swapLinesForCSS();
+        }
         if (isCSSTrue()) {
             changeArray();
             System.out.println("Измененная матрица:");
@@ -235,21 +236,17 @@ public class Matrix {
                         rootsItr[i] -= array[i][j] * rootsItr[j];
                 }
             }
-            max = Double.MIN_VALUE;
-            for (int i = 0; i < rootsItr.length; i++) {
-                double diff = Math.abs(rootsItr[i] - prevRoots[i]);
-                max = Math.max(diff, max);
-            }
+            max =findMaxDiff(prevRoots, rootsItr);
         } while (max >= epsilon);
     }
 
     private boolean findRootsItrCtrl(){
         double diff;
         double max = Double.MIN_VALUE;
+        double[] prevRoots;
         rootsItr = new double[columnNumber - 1];
-        double x;
         for (int k = 0; k < 10; k++) {
-            x = rootsItr[0];
+            prevRoots = Arrays.copyOf(rootsItr, rootsItr.length);
             for (int i = 0; i < rowNumber; i++) {
                 rootsItr[i] = array[i][columnNumber - 1];
                 for (int j = 0; j < columnNumber - 1; j++) {
@@ -257,16 +254,15 @@ public class Matrix {
                         rootsItr[i] -= array[i][j] * rootsItr[j];
                 }
             }
-            diff = Math.abs(x - rootsItr[0]);
-            if (k > 5) {
+            diff = findMaxDiff(prevRoots, rootsItr);
+            if (k > 5)
                 if (diff > max)
                     max = diff;
-            }
         }
         if (max > epsilon) return false;
 
         do {
-            x = rootsItr[0];
+            prevRoots = Arrays.copyOf(rootsItr, rootsItr.length);
             for (int i = 0; i < rowNumber; i++) {
                 rootsItr[i] = array[i][columnNumber - 1];
                 for (int j = 0; j < columnNumber - 1; j++) {
@@ -274,7 +270,8 @@ public class Matrix {
                         rootsItr[i] -= array[i][j] * rootsItr[j];
                 }
             }
-        } while (Math.abs(rootsItr[0] - x) >= epsilon);
+            max = findMaxDiff(prevRoots, rootsItr);
+        } while (max >= epsilon);
 
         return true;
 
@@ -367,6 +364,15 @@ public class Matrix {
             }
         }
         return -1;
+    }
+
+    private double findMaxDiff(double[] prevRoots, double[] roots) {
+        double max = Double.MIN_VALUE;
+        for (int i = 0; i < roots.length; i++) {
+            double diff = Math.abs(roots[i] - prevRoots[i]);
+            max = Math.max(diff, max);
+        }
+        return max;
     }
 }
 
